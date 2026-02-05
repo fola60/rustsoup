@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 pub struct Element {
     pub text: String,
+    pub name: String,
+    pub content: String,
     tags: HashMap<String, String>
 
 }
@@ -19,15 +21,17 @@ impl Element {
                 break;
             }
         }
-
+        let name_start_idx = i;
         // moving i past the name of the element
         for c in raw_element[i..].chars() {
-            if c == ' ' {
+            if c == ' ' || c == '>' {
                 break;
             } else {
                 i += 1;
             }
         }
+
+        let name = raw_element[name_start_idx..i].to_string();
 
         for c in raw_element[i..].chars() {
             if c == ' ' {
@@ -73,7 +77,6 @@ impl Element {
             }
 
             tag_value = raw_element[tag_value_start_idx..tag_value_end_idx].to_string();
-            println!("Tag name:{tag_name}, tag_value:{tag_value}");
             tags.insert(tag_name.to_lowercase(), tag_value);
 
             i = tag_value_end_idx;       
@@ -91,10 +94,18 @@ impl Element {
 
         }
 
-        
+        let mut content_end_idx = i;
+        for c in raw_element[i..].chars() {
+            if c == '<' {
+                break;
+            }
+            content_end_idx += 1;
+        }
 
 
-        Self { text: raw_element.clone() , tags}
+
+        println!("Name: {name}");
+        Self { text: raw_element.clone() , name, content: raw_element[i..content_end_idx].to_string() , tags}
     }
 
     pub fn get_tag_value(&self, tag: &String) -> Option<&String> {
@@ -113,9 +124,11 @@ mod tests {
 
     #[test]
     fn test_element_creation() {
-        let raw_element = "<div class=\"fola\" id=\"alien\">".to_string();
+        let raw_element = "<div class=\"fola\" id=\"alien\"> burgers </div>".to_string();
         let element = Element::new(&raw_element);
         assert_eq!(element.get_tag_value(&"cLass".to_string()), Some(&"fola".to_string()));
         assert_eq!(element.get_tag_value(&"id".to_string()), Some(&"alien".to_string()));
+        assert_eq!(element.content, " burgers ".to_string());
+        assert_eq!(element.name, "div".to_string());
     }
 }
