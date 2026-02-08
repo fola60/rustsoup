@@ -4,7 +4,8 @@ pub struct Element {
     pub text: String,
     pub name: String,
     pub content: String,
-    tags: HashMap<String, String>
+    tags: HashMap<String, String>,
+    //children: Option<Vec<Element>>
 
 }
 
