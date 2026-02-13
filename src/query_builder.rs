@@ -1,78 +1,77 @@
-use crate::element::{self, Element};
+use crate::element::Element;
 
 
-pub struct QueryBuilder {
-    limit: Option<u64>,
+pub struct QueryBuilder<'a> {
+    limit: Option<u16>,
     tag: Option<String>,
     attr: Option<String>,
     attr_value: Option<String>,
-    elements: Vec<Element>
+    elements: &'a Vec<Element>
 }
 
-impl QueryBuilder {
+impl<'a> QueryBuilder<'a> {
 
+    pub fn new(
+        limit: Option<u16>,
+        tag: Option<String>,
+        attr: Option<String>,
+        attr_value: Option<String>,
+        elements: &'a Vec<Element>
+    ) -> Self { 
+        QueryBuilder { limit: limit, tag: tag, attr: attr, attr_value: attr_value, elements: elements }
+    }
     
 
-    fn find(self, tag_name: &str) -> QueryBuilder {
-        QueryBuilder {
-            limit: Some(1),
-            tag: Some(tag_name.to_string()), 
-            attr: self.attr, 
-            attr_value: self.attr_value,
-            elements: self.elements
-        }
+    pub fn find(mut self, tag_name: &str) -> QueryBuilder<'a> {
+        self.limit = Some(1);
+        self.tag = Some(tag_name.to_string());
+        self
+
     }
 
-    fn find_all(self, tag_name: &str) -> QueryBuilder {
-        QueryBuilder {
-            limit: self.limit, 
-            tag: Some(tag_name.to_string()), 
-            attr: self.attr, 
-            attr_value: self.attr_value,
-            elements: self.elements
-        }
+    pub fn find_all(mut self, tag_name: &str) -> QueryBuilder<'a> {
+
+        self.tag = Some(tag_name.to_string());
+        self
     }
 
-    fn limit(self, limit: u64) -> QueryBuilder {
-        QueryBuilder { 
-            limit: Some(limit), 
-            tag: self.tag, 
-            attr: self.attr, 
-            attr_value: self.attr_value,
-            elements: self.elements
-        }
+    pub fn limit(mut self, limit: u16) -> QueryBuilder<'a> {
+        self.limit = Some(limit);
+        self
     }
 
-    fn attr(self, attr: &str) -> QueryBuilder {
-        QueryBuilder { 
-            limit: self.limit, 
-            tag: self.tag, 
-            attr: Some(attr.to_string()), 
-            attr_value: self.attr_value,
-            elements: self.elements
-        }
+    pub fn attr(mut self, attr: &str) -> QueryBuilder<'a> {
+        self.attr = Some(attr.to_string());
+        self
     }
 
-    fn attr_value(self, attr_value: &str) -> QueryBuilder {
-        QueryBuilder { 
-            limit: self.limit, 
-            tag: self.tag, 
-            attr: self.attr, 
-            attr_value: Some(attr_value.to_string()),
-            elements: self.elements
-        }
+    pub fn attr_value(mut self, attr_value: &str) -> QueryBuilder<'a> {
+        self.attr_value = Some(attr_value.to_string());
+        self
     }
 
-    fn finish(self) -> Option<Vec<Element>> {
-        let results = self.elements;
-        match self.tag {
-            Some(tag) => {
-                results = results
-                    .iter()
-                    .filter(|tag_name| tag_name == tag)
-            },
-            None
+    pub fn finish(&self) -> Option<Vec<&Element>> {
+        let mut results: Vec<&Element> = self.elements.iter().collect();
+
+        if let Some(tag) = &self.tag { 
+            results = results
+                .into_iter()
+                .filter(|element| element.name == *tag)
+                .collect();
         }
+
+        if let (Some(attr), Some(attr_value)) = (&self.attr, &self.attr_value) {
+            results = results
+                .into_iter()
+                .filter(|element| element.get_tag_value(attr) == Some(attr_value))
+                .collect();
+        }
+
+        if let Some(limit) = self.limit {
+            results.truncate(limit as usize);
+        }
+
+        Some(results)
     }
 
 

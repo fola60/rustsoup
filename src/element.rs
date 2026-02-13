@@ -105,7 +105,6 @@ impl Element {
 
 
 
-        println!("Name: {name}");
         Self { text: raw_element.clone() , name, content: raw_element[i..content_end_idx].to_string() , tags}
     }
 
